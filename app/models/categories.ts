@@ -29,6 +29,7 @@ export default {
       const baseQuery = `
         FROM ${tables.category} cat
         JOIN ${tables.category_description} cat_desc ON cat.category_id = cat_desc.category_id
+        JOIN ${tables.seo_url} seo ON cat.category_id = seo.value AND seo.key = 'path'
         WHERE cat.status = 1 
       `;
 
@@ -45,7 +46,8 @@ export default {
           cat_desc.description AS description,
           cat.category_id AS id,
           cat_desc.*,
-          (SELECT COUNT(*) FROM ${tables.product_to_category} prod_to_cat WHERE prod_to_cat.category_id = cat.category_id) AS total_products
+          (SELECT COUNT(*) FROM ${tables.product_to_category} prod_to_cat WHERE prod_to_cat.category_id = cat.category_id) AS total_products,
+          seo.keyword AS slug
         ${baseQuery}
         ${whereClause}
         ORDER BY ${sort} ${order}
@@ -86,9 +88,11 @@ export default {
           cat_desc.name AS category_name,
           cat_desc.description AS description,
           cat.category_id AS id,
-          cat_desc.*
+          cat_desc.*,
+          seo.keyword AS slug
         FROM ${tables.category} cat
         JOIN ${tables.category_description} cat_desc ON cat.category_id = cat_desc.category_id
+        JOIN ${tables.seo_url} seo ON cat.category_id = seo.value AND seo.key = 'path'
         WHERE cat.category_id = ?
       `;
       const [results]: any = await pool.query(query, [categoryId]);
@@ -97,5 +101,44 @@ export default {
       console.error('[Model] Error fetching category by ID:', error);
       throw error;
     }
-  }
+  },
+  fetchCategoryBySlug: async (slug: string): Promise<any> => {
+    try {
+      const query = `
+        SELECT 
+          cat.*,
+          cat_desc.name AS category_name,
+          cat_desc.description AS description,
+          cat.category_id AS id,
+          cat_desc.*,
+          seo.keyword AS slug
+        FROM ${tables.category} cat
+        JOIN ${tables.category_description} cat_desc ON cat.category_id = cat_desc.category_id
+        JOIN ${tables.seo_url} seo ON cat.category_id = seo.value AND seo.key = 'path'
+        WHERE cat.status = 1 AND seo.keyword = ?
+      `;
+      const [results]: any = await pool.query(query, [slug]);
+      return results[0];
+    } catch (error) {
+      console.error('[Model] Error fetching category by ID:', error);
+      throw error;
+    }
+  },
+  fetchAllSlugs: async (): Promise<any> => {
+    try {
+      const query = `
+        SELECT 
+          LOWER(seo.keyword) AS slug
+        FROM ${tables.seo_url} seo
+        JOIN ${tables.category} cat ON seo.value = cat.category_id
+        WHERE seo.key = 'path' AND cat.status = 1
+        LIMIT 1000
+      `;
+      const [results]: any = await pool.query(query);
+      return results;
+    } catch (error) {
+      console.error('[Model] Error fetching slugs:', error);
+      throw error;
+    }
+  },
 };

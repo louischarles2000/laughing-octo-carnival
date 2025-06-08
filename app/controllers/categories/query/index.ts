@@ -24,4 +24,27 @@ export const categoryQueryControllers = {
             res.status(500).json({ error: "Failed to fetch category" });
         }
     },
+    getCategoryBySlug: async (req: any, res: any) => {
+        try {
+            const categorySlug = req.params.slug;
+            const category = await categoriesService.fetchCategoryBySlug(categorySlug);
+            if (!category) {
+                return res.status(404).json({ Message: "Category not found" });
+            }
+            res.status(200).json({ Message: `Category with Slug ${categorySlug} fetched successfully`, Data: category });
+        } catch (error) {
+            res.status(500).json({ error: "Failed to fetch category" });
+        }
+    },
+    getCategorySlugs: async (req: any, res: any) => {
+        try {
+            const slugs = await categoriesService.fetchAllSlugs();
+            if (!slugs) {
+                return res.status(404).json({ Message: "Category not found" });
+            }
+            res.status(200).json({ Message: `Category slugs fetched successfully`, Data: slugs });
+        } catch (error) {
+            res.status(500).json({ error: "Failed to fetch category" });
+        }
+    },
 };

@@ -25,6 +25,29 @@ export const productQueryControllers = {
             res.status(500).json({ error: "Failed to fetch product" });
         }
     },
+    getProductBySlug: async (req: any, res: any) => {
+        try {
+            const productSlug = req.params.slug;
+            const product = await productsService.fetchProductBySlug(productSlug);
+            if (!product) {
+                return res.status(404).json({ Message: "Product not found" });
+            }
+            res.status(200).json({ Message: `Product with slug ${productSlug} fetched successfully`, Data: product });
+        } catch (error) {
+            res.status(500).json({ error: "Failed to fetch product" });
+        }
+    },
+    getProductSlugs: async (req: any, res: any) => {
+        try {
+            const product = await productsService.fetchAllSlugs();
+            if (!product) {
+                return res.status(404).json({ Message: "Product not found" });
+            }
+            res.status(200).json({ Message: `Product slugs fetched successfully`, Data: product });
+        } catch (error) {
+            res.status(500).json({ error: "Failed to fetch product" });
+        }
+    },
     getFeaturedProducts: async (req: any, res: any) => {
         try {
             const params: FetchProductsParams = req.query;
